@@ -27,14 +27,6 @@ class Artifact(BaseModel):
     metadataType: str
     metadata: Dict
 
-class AnalyzeSbom(BaseModel):
-    artifacts: List[Artifact]
-    artifactRelationships: List[Dict]
-    files: List[Dict]
-    source: Dict
-    distro: Dict
-    descriptor: Dict
-    schema: Dict 
 
 @app.get('/')
 def func():
@@ -64,10 +56,9 @@ async def Get_sbom_data(request: SBOMRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-class sbomdata(BaseModel):
-    sbom:str
 
-@app.post('/acess_sbom')
+
+@app.post('/acess_sbom/')
 async def access_sbom(sbomdata : Request):
     """"
     End point to receive a message Sbom json data from buyer and rout it to the security api api
@@ -75,8 +66,9 @@ async def access_sbom(sbomdata : Request):
     dict : json response from the vendor api
     """
     try:
+        headers = {'Content-Type': 'application/json'}
         Sbom_json = await sbomdata.json()
-        security_access_sbom_url = "http://securityagent:8084/analyze_sbom_vulneribilitys/"
+        security_access_sbom_url = "http://securityagent:8084/analyze_sbom_vulneribilitys"
         response = requests.post(security_access_sbom_url, json=Sbom_json)
        
         response.raise_for_status()
@@ -87,6 +79,6 @@ async def access_sbom(sbomdata : Request):
         }
 
     except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Error communicating with Vendor API: {str(e)}")
+        raise HTTPException(status_code=501, detail=f"Error communicating with Vendor API: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=e)

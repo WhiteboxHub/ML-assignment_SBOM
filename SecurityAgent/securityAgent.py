@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Request
 from pydantic import BaseModel,Field
 import requests
 import time
@@ -9,39 +9,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
-class Cpe(BaseModel):
-    cpe: str
-    source: Optional[str]
-
-class Artifact(BaseModel):
-    id: str
-    name: str
-    version: str
-    type: str
-    foundBy: str
-    locations: List[Dict]
-    licenses: List
-    language: str
-    cpes: List[Cpe]
-    purl: str
-    metadataType: str
-    metadata: Dict
-
-class AnalyzeSbom(BaseModel):
-    artifacts: List[Artifact]
-    artifactRelationships: List[Dict]
-    files: List[Dict]
-    source: Dict
-    distro: Dict
-    descriptor: Dict
-    schema: Dict 
 
 class AnalyzeSBOMRequest(BaseModel):
     cveid: str
     
 
 @app.post('/analyze_sbom_vulneribilitys/')
-async def analyze_sbom(request : AnalyzeSbom ):
+async def analyze_sbom(request : Request ):
     """
     Endpoint to analyze an SBOM by querying the NVD for vulnerabilities.
 
@@ -52,12 +26,14 @@ async def analyze_sbom(request : AnalyzeSbom ):
         dict: JSON response containing vulnerabilities with their IDs and descriptions.
     """
     cpesData = {}
-    cpes = request.artifacts[0].cpes
+    Sbom_json_data = await request.json()
+    cpes = Sbom_json_data.get('artifacts')[0].get('cpes')
+    print(cpes)
     for cpe in cpes:
-        cpe_value = cpe.cpe
-        cpesData[cpe.source] = []
+        cpe_value = cpe.get('cpe')
+        cpesData[cpe.get('source')] = []
         analyze_sbom_data = check_vulnerabilities(cpe_value)
-        cpesData[cpe_value].append(analyze_sbom_data)
+        cpesData[cpe.get('source')].append(analyze_sbom_data)
     return cpesData
 
 

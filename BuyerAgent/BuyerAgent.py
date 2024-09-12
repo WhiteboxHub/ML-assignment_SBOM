@@ -1,8 +1,9 @@
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Request
 from pydantic import BaseModel
 from typing import Dict,Any
 import requests
+import json
 app = FastAPI(
     title="Buyer API",
     description="An API for buyers to request SBOMs from vendors through the Integration API and assess risks.",
@@ -30,7 +31,9 @@ async def request_sbom(request: RequestSBOMRequest):
     Returns:
         dict: JSON response containing the SBOM analysis results.
     """
+
     try:
+        sbom_json_data = await request.json()
         sbom_analysis_results = []
         integration_agent_url = 'http://integrationagent:8082/get_sbom'
         data = {"product_id":request.product_id}
@@ -46,7 +49,7 @@ async def request_sbom(request: RequestSBOMRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/assess_sbom_risk/")
-async def assess_risk(sbomdata: Dict[str,Any]):
+async def assess_risk(sbomdata: Request):
     """
     Endpoint to assess the risk of an SBOM using a VEX document by calling the Security Agent API.
 
@@ -58,8 +61,10 @@ async def assess_risk(sbomdata: Dict[str,Any]):
     """
     try:
        
-       assess_sbom_risk_integration_agent_url = "http://integrationagent:8082/acess_sbom"
-       response = requests.post(assess_sbom_risk_integration_agent_url,json=sbomdata)
+       jsonsbom = await sbomdata.json()
+       
+       assess_sbom_risk_integration_agent_url = "http://integrationagent:8082/acess_sbom/"
+       response = requests.post(assess_sbom_risk_integration_agent_url,json=jsonsbom)
         # Check for errors in response from Vendor API
        response.raise_for_status()
        return response.json()
