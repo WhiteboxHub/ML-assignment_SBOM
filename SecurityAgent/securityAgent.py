@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel,Field
 import requests
 import time
 from typing import List ,Dict,Optional
@@ -34,36 +34,33 @@ class AnalyzeSbom(BaseModel):
     source: Dict
     distro: Dict
     descriptor: Dict
-    schema: Dict
+    schema: Dict 
 
 class AnalyzeSBOMRequest(BaseModel):
-    package_name : str
-    cpe : str
     cveid: str
     
 
-@app.post('/analyze_sbom')
+@app.post('/analyze_sbom_vulneribilitys/')
 async def analyze_sbom(request : AnalyzeSbom ):
     """
     Endpoint to analyze an SBOM by querying the NVD for vulnerabilities.
 
     Args:
-        request (AnalyzeSBOMRequest): The request containing the package name.
+        The request containing the package name.
 
     Returns:
         dict: JSON response containing vulnerabilities with their IDs and descriptions.
     """
-    print('called the function')
     cpesData = {}
     cpes = request.artifacts[0].cpes
     for cpe in cpes:
         cpe_value = cpe.cpe
-        cpesData[cpe_value] = []
+        cpesData[cpe.source] = []
         analyze_sbom_data = check_vulnerabilities(cpe_value)
         cpesData[cpe_value].append(analyze_sbom_data)
-    
-    
     return cpesData
+
+
 def get_vulnerabilities_from_nvd(cpe_name):
     """Query the NVD API for vulnerabilities using CPE name."""
     url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName={cpe_name}"
@@ -71,18 +68,13 @@ def get_vulnerabilities_from_nvd(cpe_name):
         print(f'Creating requestion to get vulnerabilities for {cpe_name}')
        
         response = requests.get(url)
-        response.raise_for_status()  # Raise an HTTPError for bad responses
-        # with open(f'{name}.json', 'w') as json_file:
-        #     json.dump(response.json(), json_file, indent=4)  # indent=4 for pretty printing
-        # print(f"Data saved to {name}.json")
+        response.raise_for_status() 
         print('GetVulnerabilities exicution completed')
         return response.json().get('vulnerabilities', [])
     except requests.RequestException as e:
         # logging.error(f"Error fetching data from NVD: {e}")
         print('error in get_vulnerabilities_from_nvd', e)
         return []
-
-
 def check_vulnerabilities(cpe):
     """Check the SBOM dependencies for known vulnerabilities."""
     vulnerabilities_info = {}
@@ -102,6 +94,8 @@ def check_vulnerabilities(cpe):
         })
     return vulnerabilities_info
 
+
+
 @app.post('/assess_vulnerability')
 async def assess_vulnerability(request:AnalyzeSBOMRequest):
     """
@@ -114,7 +108,6 @@ async def assess_vulnerability(request:AnalyzeSBOMRequest):
         dict: JSON response containing the assessment of the vulnerability.
     """
     url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?keywordSearch={request.cveid}"
-   
 
     try:
        

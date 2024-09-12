@@ -1,0 +1,35 @@
+# # Use official Python image
+ FROM python:3.10-slim
+
+# # Install necessary dependencies
+ RUN apt-get update && apt-get install -y curl
+
+# # Install Syft (you can change the version if needed)
+ RUN curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh
+
+# # Set the working directory
+ WORKDIR /app
+
+# Copy the JAR files into the image
+COPY log4j-nosql-2.3.2-javadoc.jar /app/packages/
+COPY log4j-web-2.3.2-javadoc.jar /app/packages/
+COPY poi-5.3.0.jar /app/packages/
+COPY openssl-1_1_1s.jar /app/packages/
+COPY log4j-core-3.0.0-beta2.jar /app/packages/
+COPY kotlin-stdlib-1.4.21.jar /app/packages/
+# # Copy requirements.txt and install dependencies
+ COPY requirements.txt .
+ RUN pip install -r requirements.txt
+
+# # Copy the FastAPI app code
+ COPY VendorAgent.py .
+
+# # Expose port 8000 for the FastAPI app
+ EXPOSE 8083
+
+# # Run the FastAPI app with Uvicorn
+ CMD ["uvicorn", "VendorAgent:app", "--host", "0.0.0.0", "--port", "8083"]
+
+
+ 
+

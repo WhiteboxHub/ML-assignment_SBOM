@@ -1,0 +1,34 @@
+
+
+services:
+  buyagent:
+    build:
+      context: ./BuyerAgent
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"  
+    depends_on:
+      - integrationagent
+
+  integrationagent:
+    build:
+      context: ./integrationAgent
+      dockerfile: Dockerfile
+    ports:
+      - "8082:8082"
+    depends_on:
+      - vendoragent
+      - securityagent
+  vendoragent:
+    build:
+      context: ./VendorAgent
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"  
+
+  securityagent:
+    build:
+      context: ./SecurityAgent
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084" 

@@ -18,4 +18,4 @@ COPY . .
 EXPOSE 8089
 
 # Run the FastAPI application using uvicorn
-CMD ["uvicorn", "fixagent:app", "--host", "0.0.0.0", "--port", "8089"]
+CMD ["uvicorn", "fixagent:app", "--host", "localhost", "--port", "8089"]

@@ -1,19 +1,26 @@
+
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from typing import Dict,Any
 import requests
-
 app = FastAPI(
     title="Buyer API",
-    description="An API for buyers to request SBOMs from vendors through the Integration API.",
-    version="1.0.0"
+    description="An API for buyers to request SBOMs from vendors through the Integration API and assess risks.",
+    version="1.1.0"
 )
 
 class RequestSBOMRequest(BaseModel):
-    vendor_id: int
-    product_ids: list[str]
+    # vendor_id: int
+    product_id: int
 
-
-async def request_sbom(request : RequestSBOMRequest):
+# class AssessRiskRequest(BaseModel):
+#     sbom: dict
+#     vex: dict
+@app.get('/')
+def api_start():
+    return {'hello':"this is buyer agent"}
+@app.post("/request_sbom/")
+async def request_sbom(request: RequestSBOMRequest):
     """
     Endpoint for buyers to request SBOMs from vendors through the Integration API.
 
@@ -21,38 +28,41 @@ async def request_sbom(request : RequestSBOMRequest):
         request (RequestSBOMRequest): The request containing vendor_id and product_ids.
 
     Returns:
-        dict: JSON response from the Integration API.
+        dict: JSON response containing the SBOM analysis results.
     """
     try:
-        # Call the Integration API to route the message to the Vendor API
-        integration_api_url = "http://localhost:8082/route_message/"
-        security_agent_api_url = "http://localhost:8084/analyze_sbom/"
         sbom_analysis_results = []
-        
-        for product_id in request.product_ids:
-            data = {
-                "sender": "Buyer API",
-                "recipient": "Vendor API",
-                "product_id": product_id
-            }
-            
-            # Request SBOM from Integration API
-            response = requests.post(integration_api_url, json=data)
-            response.raise_for_status()
-            sbom = response.json()
-
-            # Analyze the SBOM by calling Security Agent API
-            analyze_response = requests.post(security_agent_api_url, json={"package_name": product_id})
-            analyze_response.raise_for_status()
-            analysis_result = analyze_response.json()
-            sbom_analysis_results.append(analysis_result)
+        integration_agent_url = 'http://integrationagent:8082/get_sbom'
+        data = {"product_id":request.product_id}
+        response = requests.post(integration_agent_url,json=data)
+        response.raise_for_status()
 
         return {
             "message": "SBOM requests sent to Vendor API and analyzed successfully.",
-            "analysis_results": sbom_analysis_results
+            "sbom_data": response.json()
         }
 
-    except requests.RequestException as e:
-        raise HTTPException(status_code=500, detail=f"Error communicating with APIs: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/assess_sbom_risk/")
+async def assess_risk(sbomdata: Dict[str,Any]):
+    """
+    Endpoint to assess the risk of an SBOM using a VEX document by calling the Security Agent API.
+
+    Args:
+        request (AssessRiskRequest): The request containing the SBOM and VEX document.
+
+    Returns:
+        dict: JSON response containing the risk assessment.
+    """
+    try:
+       
+       assess_sbom_risk_integration_agent_url = "http://integrationagent:8082/acess_sbom"
+       response = requests.post(assess_sbom_risk_integration_agent_url,json=sbomdata)
+        # Check for errors in response from Vendor API
+       response.raise_for_status()
+       return response.json()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
