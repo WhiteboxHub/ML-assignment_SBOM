@@ -101,4 +101,23 @@ def get_vulnerability_score_endpoint(cveid:str):
         raise HTTPException(status_code=501, detail=f"Error communicating with Vendor API: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=e)
-    
+
+class VulnerabilityFix(BaseModel):
+    CVE_ID :str
+    baseSeverity: str
+    cve_exploitabilityScore : int
+    cve_impactScore : int
+@app.post('/prioritize_fixes')
+def prioritize_fixes_endpoint(data : VulnerabilityFix):
+    try:
+        security_Vulnerability_score_endpoint = "http://fixagent:8085/prioritize_fixes"
+        response = requests.post(security_Vulnerability_score_endpoint, json=data)
+        response.raise_for_status()
+        return {
+            "details":"Vulinerabities Score acessed",
+            "data":response.json()
+        }
+    except requests.RequestException as e:
+        raise HTTPException(status_code=501, detail=f"Error communicating with Vendor API: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=e)
