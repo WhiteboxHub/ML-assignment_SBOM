@@ -11,10 +11,10 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # Copy the BuyerAgent.py file into the container
-COPY BuyerAgent.py /app/
+COPY BuyerAgentApp.py /app/
 
 # Expose port 8081 on which FastAPI will run
 EXPOSE 8081
 
 # Run Uvicorn server on port 8081
-CMD ["uvicorn", "BuyerAgent:app", "--host", "0.0.0.0", "--port", "8081"]
+CMD ["streamlit","run", "BuyerAgentApp.py",  "--server.port", "8081"]
