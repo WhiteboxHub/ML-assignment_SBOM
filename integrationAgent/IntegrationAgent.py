@@ -82,3 +82,23 @@ async def access_sbom(sbomdata : Request):
         raise HTTPException(status_code=501, detail=f"Error communicating with Vendor API: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=e)
+
+
+@app.get('/get_vulnerability_score')
+def get_vulnerability_score_endpoint(cveid:str):
+    try:
+        security_Vulnerability_score_endpoint = "http://securityagent:8084/assess_vulnerability"
+        data = {
+            'cveid':cveid
+        }
+        response = requests.post(security_Vulnerability_score_endpoint, json=data)
+        response.raise_for_status()
+        return {
+            "details":"Vulinerabities Score acessed",
+            "data":response.json()
+        }
+    except requests.RequestException as e:
+        raise HTTPException(status_code=501, detail=f"Error communicating with Vendor API: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=e)
+    

@@ -28,33 +28,28 @@ async def analyze_sbom(request : Request ):
     cpesData = {}
     Sbom_json_data = await request.json()
     cpes = Sbom_json_data.get('artifacts')[0].get('cpes')
-    print(cpes)
     for cpe in cpes:
         cpe_value = cpe.get('cpe')
         cpesData[cpe.get('source')] = []
         analyze_sbom_data = check_vulnerabilities(cpe_value)
-        cpesData[cpe.get('source')].append(analyze_sbom_data)
-    return cpesData
-
+        
+    return analyze_sbom_data
 
 def get_vulnerabilities_from_nvd(cpe_name):
     """Query the NVD API for vulnerabilities using CPE name."""
     url = f"https://services.nvd.nist.gov/rest/json/cves/2.0?cpeName={cpe_name}"
     try:
-        print(f'Creating requestion to get vulnerabilities for {cpe_name}')
-       
         response = requests.get(url)
         response.raise_for_status() 
-        print('GetVulnerabilities exicution completed')
         return response.json().get('vulnerabilities', [])
     except requests.RequestException as e:
         # logging.error(f"Error fetching data from NVD: {e}")
         print('error in get_vulnerabilities_from_nvd', e)
         return []
+
 def check_vulnerabilities(cpe):
     """Check the SBOM dependencies for known vulnerabilities."""
     vulnerabilities_info = {}
-    print(f"Checking vulnerabilities for {cpe}...")
     cve_list = get_vulnerabilities_from_nvd(cpe)
     time.sleep(1)  # Rate limit to avoid hitting API limits
     vulnerabilities = cve_list
@@ -94,8 +89,6 @@ async def assess_vulnerability(request:AnalyzeSBOMRequest):
         check_vulnerabilities_score = check_vulnerabilities_info(vulnerabilities,request.cveid)
         return check_vulnerabilities_score
     except requests.RequestException as e:
-        # logging.error(f"Error fetching data from NVD: {e}")
-        print('error in get_vulnerabilities_from_nvd', e)
         return []
 
 def check_vulnerabilities_info(vulnerability,cveid):

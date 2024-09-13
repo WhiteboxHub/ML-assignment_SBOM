@@ -12,13 +12,14 @@ services:
 
   integrationagent:
     build:
-      context: ./integrationAgent
+      context: ./IntegrationAgent
       dockerfile: Dockerfile
     ports:
       - "8082:8082"
     depends_on:
       - vendoragent
       - securityagent
+      
   vendoragent:
     build:
       context: ./VendorAgent
@@ -32,3 +33,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8084:8084" 
+  
+  fixagent:
+    build:
+      context: ./FixAgent
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8085"

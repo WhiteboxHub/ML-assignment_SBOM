@@ -7,15 +7,15 @@ WORKDIR /app
 
 # Copy the requirements file
 # COPY requirements.txt .
-
+COPY requirements.txt .
 # Install the Python dependencies
-RUN pip install fastapi uvicorn requests pydantic
+RUN pip install -r requirements.txt
 
 # Copy the rest of the application code
-COPY . .
+COPY FixAgent.py /app/
 
 # Expose the port FastAPI will run on
-EXPOSE 8089
+EXPOSE 8085
 
 # Run the FastAPI application using uvicorn
-CMD ["uvicorn", "fixagent:app", "--host", "localhost", "--port", "8089"]
+CMD ["uvicorn", "FixAgent:app", "--host", "0.0.0.0", "--port", "8085"]

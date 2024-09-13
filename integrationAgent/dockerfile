@@ -16,4 +16,4 @@ COPY . .
 EXPOSE 8082
 
 # Define the command to run the application using uvicorn
-CMD ["uvicorn", "fapi_integrationAgent:app", "--host", "0.0.0.0", "--port", "8082"]
+CMD ["uvicorn", "IntegrationAgent:app", "--host", "0.0.0.0", "--port", "8082"]

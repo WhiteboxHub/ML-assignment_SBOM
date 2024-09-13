@@ -18,4 +18,4 @@ COPY . .
 EXPOSE 8084
 
 # Run the FastAPI application using uvicorn
-CMD ["uvicorn", "securityAgent:app", "--host", "0.0.0.0", "--port", "8084"]
+CMD ["uvicorn", "SecurityAgent:app", "--host", "0.0.0.0", "--port", "8084"]

@@ -8,17 +8,20 @@ st.write("Enter your Product Id to get SBOM of Product")
 # Input from the user
 user_input = st.text_input("Enter Product ID")
 
-# Initialize session state for storing SBOM data and analysis results
+# Initialize session state for storing SBOM data, analysis results, and individual vulnerability scores
 if 'sbomdata' not in st.session_state:
     st.session_state.sbomdata = None
 
 if 'vulnerability' not in st.session_state:
     st.session_state.vulnerability = None
 
-# Button to submit input
-if st.button("Call API"):
+if 'analyzed_vulnerabilities' not in st.session_state:
+    st.session_state.analyzed_vulnerabilities = {}
+
+# Button to request SBOM data
+if st.button("Request SBOM"):
     if user_input:
-        st.write(f"Calling API with input: {user_input}")
+        st.write(f"Calling SBOM API with Product ID: {user_input}")
 
         try:
             integration_agent_url = 'http://integrationagent:8082/get_sbom'
@@ -42,11 +45,9 @@ if st.session_state.sbomdata:
             assess_sbom_risk_integration_agent_url = "http://integrationagent:8082/acess_sbom/"
             response = requests.post(assess_sbom_risk_integration_agent_url, json=st.session_state.sbomdata)
             response.raise_for_status()
-            st.session_state.vulnerability = response.json()
-            st.json(response.json())
-              # Store analysis results in session state
+            st.session_state.vulnerability = response.json()  # Store analysis results in session state
             st.success("Analysis Completed")
-            
+            st.json(st.session_state.vulnerability)  # Display the full analysis result
         except requests.exceptions.RequestException as e:
             st.error(f"API call failed: {e}")
 
@@ -66,8 +67,22 @@ if st.session_state.vulnerability:
             
             # Add an "Analyze Vulnerability Score" button
             if st.button(f"Analyze Vulnerability Score for {vulnerability_id}"):
-                # You can add functionality here to analyze the score
-                st.write(f"Button clicked for CVE ID: {vulnerability_id}")
-                # Add further functionality if needed
-    else:
-        st.write("No vulnerabilities found.")
+                try:
+                    access_vulnerability_score = f"http://integrationagent:8082/get_vulnerability_score/?cveid={vulnerability_id}"
+                    response = requests.get(access_vulnerability_score)
+                    response.raise_for_status()
+                    
+                    # Store the result in session state using the vulnerability ID as a key
+                    st.session_state.analyzed_vulnerabilities[vulnerability_id] = response.json()
+                    st.success(f"Analysis Completed for {vulnerability_id}")
+                    with st.expander("vulnerability Score"):
+                        st.json(st.session_state.analyzed_vulnerabilities[vulnerability_id])
+                    
+                    
+                except requests.exceptions.RequestException as e:
+                    st.error(f"API call failed: {e}")
+
+# Display all analyzed vulnerability scores
+for vulnerability_id, score_data in st.session_state.analyzed_vulnerabilities.items():
+    with st.expander(f"{vulnerability_id} Vulnerability Score"):
+        st.json(score_data)
